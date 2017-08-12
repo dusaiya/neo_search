@@ -1,7 +1,18 @@
 <!doctype html>
 <title>Hello from Flask</title>
+<h3>属性信息</h3>
 {% if name %}
- <h1>Hello {{ name }}!</h1>
+ <h1>Hello {{ name.nick_name}}!</h1>
+{% for key in name recursive %}
+    <li>{{ key }}
+        {% if name[key] %}
+            <ul>{{ name[key] }}</ul>
+        {% endif %}
+    </li>
+{% endfor %}
 {% else %}
   <h1>Hello World!</h1>
+{% endif %}
+
+{% if labels %}
 {% endif %}
