@@ -1,18 +1,193 @@
-<!doctype html>
-<title>Hello from Flask</title>
-<h3>属性信息</h3>
-{% if name %}
- <h1>Hello {{ name.nick_name}}!</h1>
-{% for key in name recursive %}
-    <li>{{ key }}
-        {% if name[key] %}
-            <ul>{{ name[key] }}</ul>
-        {% endif %}
-    </li>
-{% endfor %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="../static/echarts.min.js"></script>
+    <script src="../static/jquery-3.2.1.min.js"></script>
+    <script src="../static/acharts-min.js"></script>
+    <link href="../static/bui.css" rel="stylesheet">
+    <link href="../static/dpl.css" rel="stylesheet">
+    <title>Neo4j 豆瓣查询</title>
+</head>
+<style type="text/css">
+table.gridtable {
+    font-family: verdana,arial,sans-serif;
+    font-size:11px;
+    color:#333333;
+    border-width: 1px;
+    border-color: #666666;
+    border-collapse: collapse;
+}
+table.gridtable th {
+    border-width: 1px;
+    padding: 8px;
+    border-style: solid;
+    border-color: #666666;
+    background-color: #dedede;
+}
+table.gridtable td {
+    border-width: 1px;
+    padding: 8px;
+    border-style: solid;
+    border-color: #666666;
+    background-color: #ffffff;
+}
+</style>
+<body>
+<h2>根据豆瓣用户名称信息查询对齐信息</h2>
+<input id="startNodeId" type="hidden" value="{{ startNode.neo_id}}"/>
+<input id="startNodeName" type="hidden" value="{{ startNode.name}}"/>
+<input id="endNodeId" type="hidden" value="{{ endNode.neo_id}}"/>
+<input id="endNodeName" type="hidden" value="{{ endNode.nick_name}}"/>
+<div id="myGraph1" style="width: 600px;height:400px"></div>
+<div>
+{% if nodeDataList %}
+    {%for nodeData in nodeDataList recursive %}
+    <h3>Hello {{ nodeData.neo_id}}!</h3>
+    <b>labels:</b>
+    
+        <table class="gridtable">
+            <tbody >
+            {% for key in nodeData recursive %}
+                {% if key!="label"%}    
+                <!-- 将label信息提前显示 -->
+                <tr>
+                    <td>{{ key }}</td>
+                    <td>{{ nodeData[key] }}</td>
+                 </tr>
+                 {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endfor %}
 {% else %}
   <h1>Hello World!</h1>
 {% endif %}
+</div>
+<script type="text/javascript">
+var startNodeId=$("#startNodeId").val();
+var startNodeName=$("#startNodeName").val();
+var endNodeId=$("#endNodeId").val();
+var endNodeName=$("#endNodeName").val();
 
-{% if labels %}
-{% endif %}
+var nodeDataList=$("#nodeDataList").val();
+var graph = {//数据
+        "nodes": [//节点
+            {
+                "name":startNodeName,//名称
+                "attributes": {},           
+                "id": startNodeId,//id
+                "size": 80,//圆的大小
+                "category" :0//类别
+            },
+            {
+                "name":endNodeName,
+                "attributes": {},
+                "id": endNodeId,
+                "size": 80,
+                "category" :1//类别
+            }
+        ],
+        "links": [//连接
+            {
+                "source": startNodeId,//源点
+                "target": endNodeId
+            }
+
+        ]
+    };
+
+// 基于准备好的dom，初始化echarts实例
+var myChart = echarts.init(document.getElementById('myGraph1'));
+myChart.hideLoading();
+var categories = [{name:"Douban"},{name:"WeiBo"}];
+graph.nodes.forEach(function (node) {
+    node.itemStyle = null;//
+    node.symbolSize = node.size;//强制指定节点的大小   
+    // Use random x, y
+    node.x = node.y = null;
+    node.draggable = true;
+
+});
+option = {
+    title: {
+        text: 'demo',//文本标题
+        subtext: 'Default layout',//副标题
+        top: 'bottom',//上下位置  
+        left: 'right'//左右位置
+    },
+    tooltip: {
+        formatter: function (params, ticket, callback) {//回调函数
+             var str = appendPath(graph.nodes[params.dataIndex].id);
+             document.getElementById("div1").innerHTML = str;
+             return str;//
+         }
+    },
+    legend: [{
+        right: 10,
+        // selectedMode: 'single',
+        data: categories.map(function (a) {//显示策略
+            return a.name;
+        })
+    }],
+    animation: false,//是否开启动画
+    series : [
+        {
+            name: '',
+            type: 'graph',
+            layout: 'circular',
+            data: graph.nodes,//节点数据
+            links: graph.links,//节点边数据
+            categories: categories,//策略
+            roam: true,//是否开启滚轮缩放和拖拽漫游，默认为false（关闭），其他有效输入为true（开启），'scale'（仅开启滚轮缩放），'move'（仅开启拖拽漫游）
+            label: {
+                normal: {
+                    show:'true',
+                    position: 'right'
+                }
+            },
+            edgeSymbol : ['circle', 'arrow'],//边两端的标记类型，可以是一个数组分别指定两端，也可以是单个统一指定。默认不显示标记，常见的可以设置为箭头，如下：edgeSymbol: ['circle', 'arrow']
+            edgeSymbolSize : 10,//边两端的标记大小，可以是一个数组分别指定两端，也可以是单个统一指定。
+
+            slient:false,//是否响应点击事件，为false的时候就是响应
+            force: {
+                repulsion : 40,//节点之间的斥力因子。支持数组表达斥力范围，值越大斥力越大。
+                gravity : 0.2,//节点受到的向中心的引力因子。该值越大节点越往中心点靠拢。
+                edgeLength :60,//边的两个节点之间的距离，这个距离也会受 repulsion。[10, 50] 。值越小则长度越长
+                layoutAnimation : true
+
+            }
+        }
+    ]
+};
+
+
+myChart.setOption(option);
+
+
+
+
+/**
+    拼接路径
+ */
+function appendPath(id){ 
+    var str = id;
+    var links = graph.links;
+    var i = 0;
+    var map = {};
+    for( i = 0 ; i < links.length; i++){
+        map[links[i].target] = links[i].source;
+    }
+    while(true){           
+        if(map[id] == undefined){
+            break;
+        }
+        str = map[id]  +"->" + str;
+        id = map[id] ;
+    }
+    return str;
+}
+
+    </script>
+</body>
+</html>
