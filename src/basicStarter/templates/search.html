@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <script src="../static/echarts.min.js"></script>
     <script src="../static/jquery-3.2.1.min.js"></script>
-    <script src="../static/acharts-min.js"></script>
     <link href="../static/bui.css" rel="stylesheet">
     <link href="../static/dpl.css" rel="stylesheet">
     <title>Neo4j 豆瓣查询</title>
@@ -39,8 +38,8 @@ table.gridtable td {
 <input id="startNodeName" type="hidden" value="{{ startNode.name}}"/>
 <input id="endNodeId" type="hidden" value="{{ endNode.neo_id}}"/>
 <input id="endNodeName" type="hidden" value="{{ endNode.nick_name}}"/>
-<div id="myGraph1" style="width: 600px;height:400px"></div>
-<div>
+<div id="myGraph1" style="width:40%;height:400px;float:right"></div>
+<div align="center" style="width:55%;">
 {% if nodeDataList %}
     {%for nodeData in nodeDataList recursive %}
     <h3>Hello {{ nodeData.neo_id}}!</h3>
@@ -69,14 +68,20 @@ var startNodeId=$("#startNodeId").val();
 var startNodeName=$("#startNodeName").val();
 var endNodeId=$("#endNodeId").val();
 var endNodeName=$("#endNodeName").val();
+var jsonNode=JSON.parse({{jsonNode|tojson|safe}});
+var mjsonList=new Array();
+{% for tmpJson in jsonNodeList  %}
+    var tmpJson = JSON.parse({{tmpJson|tojson|safe}});
+    mjsonList.push(tmpJson);
+{% endfor %}
 
 var nodeDataList=$("#nodeDataList").val();
 var graph = {//数据
         "nodes": [//节点
             {
-                "name":startNodeName,//名称
+                "name":mjsonList[0].name,//名称
                 "attributes": {},           
-                "id": startNodeId,//id
+                "id": mjsonList[0].id,//id
                 "size": 80,//圆的大小
                 "category" :0//类别
             },
