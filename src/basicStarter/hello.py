@@ -3,15 +3,29 @@
 from flask import Flask
 app = Flask(__name__)
 from flask import render_template
-
 import json
-
 from py2neo import Graph, Node, Relationship
 neo_graph = Graph(
     "http://10.200.6.5:7474/db/data/", 
     username="neo4jTest", 
     password="ictsoftware"
 )
+
+
+def neoob2dict(ob):
+    '''
+        将ob对象转换成dict对象
+    '''
+    newDictOb = dict(ob)
+    print ob
+    labelsets = ob.labels()._SetView__items
+    print labelsets
+    for nodelabel in labelsets:
+        newDictOb["label"]= nodelabel.encode("utf-8")
+        break ##只能有一个标签
+    return newDictOb
+
+
 def dict2json(newDictOb):
     if newDictOb["label"] == "Douban":
         jsonNode = json.dumps({"id":newDictOb["neo_id"], 
@@ -21,48 +35,37 @@ def dict2json(newDictOb):
         jsonNode = json.dumps({"id":newDictOb["neo_id"], 
                 "name":newDictOb["nick_name"], 
                 "size":40, "category":1})
+    print jsonNode
     return jsonNode
-
-
-def neoob2dict(ob):
-    '''
-        将ob对象转换成dict对象
-    '''
-    newDictOb = dict(ob)
-    labelsets = ob.labels()._SetView__items
-    for nodelabel in labelsets:
-        newDictOb["label"]= nodelabel.encode("utf-8")
-        break ##只能有一个标签
-    return newDictOb
 
 @app.route('/search')
 @app.route('/search/<nick_name>')
 def search(nick_name=None):
-    print nick_name
-    nodelist=[]
-    newDictList=[]
     rellist=[]
+    newDictList=[]
+    jsonNodeList=[]
     ob=neo_graph.find_one("Douban", "name", nick_name)
+    print ob.__class__
     sourceDictOb=neoob2dict(ob)
     newDictList.append(sourceDictOb)
-    nodelist.append(ob)
+    jsonNodeList.append(dict2json(sourceDictOb))
+    ##根据豆瓣作为source节点进行查找
     for rel in neo_graph.match(start_node=ob):
         targetDictOb=neoob2dict(rel.end_node())
         newDictList.append(targetDictOb)
-        nodelist.append(rel.end_node())
+        jsonNodeList.append(dict2json(targetDictOb))
         myrel=json.dumps({"source":sourceDictOb["neo_id"],  "target":targetDictOb["neo_id"]  })
         rellist.append(myrel)
-    jsonNodeList=[]
-    for newDictOb in newDictList:
-        jsonNode=dict2json(newDictOb)
-        jsonNodeList.append(jsonNode)
     
-    startNode=newDictList[0]
-    endNode=newDictList[1]
+#     for rel in neo_graph.match(end_node=ob):
+#         targetDictOb=neoob2dict(rel.start_node())
+#         newDictList.append(targetDictOb)
+#         jsonNodeList.append(dict2json(targetDictOb))
+#         myrel=json.dumps({"source":targetDictOb["neo_id"],  "target":sourceDictOb["neo_id"]  })
+#         rellist.append(myrel)
     
     return render_template('search.html', nodeDataList=newDictList,
-                           startNode=startNode,endNode=endNode,
-                           jsonNode=jsonNode,jsonNodeList=jsonNodeList)
+                          jsonNodeList=jsonNodeList,rellist=rellist)
 
 if __name__ == '__main__':
     app.debug = True

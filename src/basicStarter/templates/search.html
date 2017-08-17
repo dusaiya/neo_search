@@ -34,17 +34,13 @@ table.gridtable td {
 </style>
 <body>
 <h2>根据豆瓣用户名称信息查询对齐信息</h2>
-<input id="startNodeId" type="hidden" value="{{ startNode.neo_id}}"/>
-<input id="startNodeName" type="hidden" value="{{ startNode.name}}"/>
-<input id="endNodeId" type="hidden" value="{{ endNode.neo_id}}"/>
-<input id="endNodeName" type="hidden" value="{{ endNode.nick_name}}"/>
 <div id="myGraph1" style="width:40%;height:400px;float:right"></div>
 <div align="center" style="width:55%;">
 {% if nodeDataList %}
     {%for nodeData in nodeDataList recursive %}
     <h3>Hello {{ nodeData.neo_id}}!</h3>
     <b>labels:</b>
-    
+    {{ nodeData.label}}
         <table class="gridtable">
             <tbody >
             {% for key in nodeData recursive %}
@@ -64,42 +60,21 @@ table.gridtable td {
 {% endif %}
 </div>
 <script type="text/javascript">
-var startNodeId=$("#startNodeId").val();
-var startNodeName=$("#startNodeName").val();
-var endNodeId=$("#endNodeId").val();
-var endNodeName=$("#endNodeName").val();
-var jsonNode=JSON.parse({{jsonNode|tojson|safe}});
 var mjsonList=new Array();
 {% for tmpJson in jsonNodeList  %}
     var tmpJson = JSON.parse({{tmpJson|tojson|safe}});
     mjsonList.push(tmpJson);
 {% endfor %}
 
-var nodeDataList=$("#nodeDataList").val();
-var graph = {//数据
-        "nodes": [//节点
-            {
-                "name":mjsonList[0].name,//名称
-                "attributes": {},           
-                "id": mjsonList[0].id,//id
-                "size": 80,//圆的大小
-                "category" :0//类别
-            },
-            {
-                "name":endNodeName,
-                "attributes": {},
-                "id": endNodeId,
-                "size": 80,
-                "category" :1//类别
-            }
-        ],
-        "links": [//连接
-            {
-                "source": startNodeId,//源点
-                "target": endNodeId
-            }
+var mlinks=new Array();
+{% for tmprel in rellist  %}
+    var tmpJson = JSON.parse({{tmprel|tojson|safe}});
+    mlinks.push(tmpJson);
+{% endfor %}
 
-        ]
+var graph = {//数据
+        "nodes": mjsonList,
+        "links": mlinks
     };
 
 // 基于准备好的dom，初始化echarts实例
