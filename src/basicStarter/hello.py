@@ -12,45 +12,53 @@ neo_graph = Graph(
     username="neo4jTest", 
     password="ictsoftware"
 )
+def dict2json(newDictOb):
+    if newDictOb["label"] == "Douban":
+        jsonNode = json.dumps({"id":newDictOb["neo_id"], 
+                "name":newDictOb["name"], 
+                "size":40, "category":0})
+    elif newDictOb["label"] == "Weibo":
+        jsonNode = json.dumps({"id":newDictOb["neo_id"], 
+                "name":newDictOb["nick_name"], 
+                "size":40, "category":1})
+    return jsonNode
+
+
+def neoob2dict(ob):
+    '''
+        将ob对象转换成dict对象
+    '''
+    newDictOb = dict(ob)
+    labelsets = ob.labels()._SetView__items
+    for nodelabel in labelsets:
+        newDictOb["label"]= nodelabel.encode("utf-8")
+        break ##只能有一个标签
+    return newDictOb
 
 @app.route('/search')
 @app.route('/search/<nick_name>')
 def search(nick_name=None):
     print nick_name
     nodelist=[]
-    myrel=None
+    newDictList=[]
+    rellist=[]
     ob=neo_graph.find_one("Douban", "name", nick_name)
-    print ob
+    sourceDictOb=neoob2dict(ob)
+    newDictList.append(sourceDictOb)
     nodelist.append(ob)
     for rel in neo_graph.match(start_node=ob):
+        targetDictOb=neoob2dict(rel.end_node())
+        newDictList.append(targetDictOb)
         nodelist.append(rel.end_node())
-        myrel=rel
-        break
-    newDictList=[]
+        myrel=json.dumps({"source":sourceDictOb["neo_id"],  "target":targetDictOb["neo_id"]  })
+        rellist.append(myrel)
     jsonNodeList=[]
-    for nodeNeo in nodelist:
-        newDictOb=dict(nodeNeo)
-        labelsets=nodeNeo.labels()._SetView__items
-        for nodelabel in labelsets:
-            newDictOb["label"]= nodelabel.encode("utf-8")
-            break ##只能有一个标签
-        newDictList.append(newDictOb)
-        if newDictOb["label"]=="Douban":
-            jsonNode=json.dumps({"id":newDictOb["neo_id"],
-                                 "name":newDictOb["name"]  })
-        else:
-             jsonNode=json.dumps({"id":newDictOb["neo_id"],
-                                 "name":newDictOb["nick_name"]  })
+    for newDictOb in newDictList:
+        jsonNode=dict2json(newDictOb)
         jsonNodeList.append(jsonNode)
     
     startNode=newDictList[0]
     endNode=newDictList[1]
-    jsonNode=json.dumps({"id":newDictList[0]["neo_id"],
-                         "name":newDictList[0]["name"]  })
-    jsonNodeList=[json.dumps({"id":newDictList[0]["neo_id"],
-                         "name":newDictList[0]["name"]  }),
-                            json.dumps({"id":newDictList[1]["neo_id"],
-                         "name":newDictList[1]["nick_name"]  }) ] 
     
     return render_template('search.html', nodeDataList=newDictList,
                            startNode=startNode,endNode=endNode,
