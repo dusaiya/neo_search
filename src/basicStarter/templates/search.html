@@ -82,7 +82,7 @@ var graph = {//数据
 // 基于准备好的dom，初始化echarts实例
 var myChart = echarts.init(document.getElementById('myGraph1'));
 myChart.hideLoading();
-var categories = [{name:"Douban"},{name:"WeiBo"}];
+var categories = [{name:'User'},{name:"Douban"},{name:"Weibo"}];
 graph.nodes.forEach(function (node) {
     node.itemStyle = null;//
     node.symbolSize = node.size;//强制指定节点的大小   
@@ -92,12 +92,6 @@ graph.nodes.forEach(function (node) {
 
 });
 option = {
-    title: {
-        text: 'douban2weibo',//文本标题
-        subtext: 'Default layout',//副标题
-        top: 'bottom',//上下位置  
-        left: 'left'//左右位置
-    },
     tooltip: {
         formatter: function (params, ticket, callback) {//回调函数
              var str = "";
