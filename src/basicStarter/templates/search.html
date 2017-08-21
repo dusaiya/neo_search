@@ -35,6 +35,8 @@ table.gridtable td {
 <body>
 <h2>根据豆瓣用户名称信息查询对齐信息</h2>
 <div id="myGraph1" style="width:40%;height:400px;float:right"></div>
+<div id = "div1"></div>
+
 <div align="center" style="width:55%;">
 {% if nodeDataList %}
     {%for nodeData in nodeDataList recursive %}
@@ -91,15 +93,14 @@ graph.nodes.forEach(function (node) {
 });
 option = {
     title: {
-        text: 'demo',//文本标题
+        text: 'douban2weibo',//文本标题
         subtext: 'Default layout',//副标题
         top: 'bottom',//上下位置  
-        left: 'right'//左右位置
+        left: 'left'//左右位置
     },
     tooltip: {
         formatter: function (params, ticket, callback) {//回调函数
-             var str = appendPath(graph.nodes[params.dataIndex].id);
-             document.getElementById("div1").innerHTML = str;
+             var str = "";
              return str;//
          }
     },
@@ -115,7 +116,7 @@ option = {
         {
             name: '',
             type: 'graph',
-            layout: 'circular',
+            layout: 'force',
             data: graph.nodes,//节点数据
             links: graph.links,//节点边数据
             categories: categories,//策略
@@ -126,47 +127,27 @@ option = {
                     position: 'right'
                 }
             },
-            edgeSymbol : ['circle', 'arrow'],//边两端的标记类型，可以是一个数组分别指定两端，也可以是单个统一指定。默认不显示标记，常见的可以设置为箭头，如下：edgeSymbol: ['circle', 'arrow']
+            edgeSymbol : ['none', 'arrow'],//边两端的标记类型，可以是一个数组分别指定两端，也可以是单个统一指定。默认不显示标记，常见的可以设置为箭头，如下：edgeSymbol: ['circle', 'arrow']
             edgeSymbolSize : 10,//边两端的标记大小，可以是一个数组分别指定两端，也可以是单个统一指定。
 
             slient:false,//是否响应点击事件，为false的时候就是响应
             force: {
-                repulsion : 40,//节点之间的斥力因子。支持数组表达斥力范围，值越大斥力越大。
-                gravity : 0.2,//节点受到的向中心的引力因子。该值越大节点越往中心点靠拢。
-                edgeLength :60,//边的两个节点之间的距离，这个距离也会受 repulsion。[10, 50] 。值越小则长度越长
+                repulsion : 100,//节点之间的斥力因子。支持数组表达斥力范围，值越大斥力越大。
+                gravity : 0.01,//节点受到的向中心的引力因子。该值越大节点越往中心点靠拢。
+                edgeLength :220,//边的两个节点之间的距离，这个距离也会受 repulsion。[10, 50] 。值越小则长度越长
                 layoutAnimation : true
 
+            },
+            linestyle:{
+                normal:{
+                    color:"#bbb",
+                    width:20
+                }
             }
         }
     ]
 };
-
-
 myChart.setOption(option);
-
-
-
-
-/**
-    拼接路径
- */
-function appendPath(id){ 
-    var str = id;
-    var links = graph.links;
-    var i = 0;
-    var map = {};
-    for( i = 0 ; i < links.length; i++){
-        map[links[i].target] = links[i].source;
-    }
-    while(true){           
-        if(map[id] == undefined){
-            break;
-        }
-        str = map[id]  +"->" + str;
-        id = map[id] ;
-    }
-    return str;
-}
 
     </script>
 </body>

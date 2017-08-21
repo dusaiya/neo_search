@@ -17,9 +17,7 @@ def neoob2dict(ob):
         将ob对象转换成dict对象
     '''
     newDictOb = dict(ob)
-    print ob
     labelsets = ob.labels()._SetView__items
-    print labelsets
     for nodelabel in labelsets:
         newDictOb["label"]= nodelabel.encode("utf-8")
         break ##只能有一个标签
@@ -27,6 +25,9 @@ def neoob2dict(ob):
 
 
 def dict2json(newDictOb):
+    '''
+        neo节点转化成字典格式
+    '''
     if newDictOb["label"] == "Douban":
         jsonNode = json.dumps({"id":newDictOb["neo_id"], 
                 "name":newDictOb["name"], 
@@ -35,7 +36,6 @@ def dict2json(newDictOb):
         jsonNode = json.dumps({"id":newDictOb["neo_id"], 
                 "name":newDictOb["nick_name"], 
                 "size":40, "category":1})
-    print jsonNode
     return jsonNode
 
 @app.route('/search')
@@ -45,7 +45,6 @@ def search(nick_name=None):
     newDictList=[]
     jsonNodeList=[]
     ob=neo_graph.find_one("Douban", "name", nick_name)
-    print ob.__class__
     sourceDictOb=neoob2dict(ob)
     newDictList.append(sourceDictOb)
     jsonNodeList.append(dict2json(sourceDictOb))
@@ -54,7 +53,9 @@ def search(nick_name=None):
         targetDictOb=neoob2dict(rel.end_node())
         newDictList.append(targetDictOb)
         jsonNodeList.append(dict2json(targetDictOb))
-        myrel=json.dumps({"source":sourceDictOb["neo_id"],  "target":targetDictOb["neo_id"]  })
+        relLabel=rel._Relationship__type.__str__()
+        myrel=json.dumps({"source":sourceDictOb["neo_id"],  "target":targetDictOb["neo_id"],
+                          "label":{"normal":{"show":True,"formatter":relLabel}} })
         rellist.append(myrel)
     
 #     for rel in neo_graph.match(end_node=ob):
