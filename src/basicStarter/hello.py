@@ -52,6 +52,8 @@ def search(nick_name=None):
     newDictList=[]
     jsonNodeList=[]
     ob=neo_graph.find_one("Douban", "name", nick_name)
+    print 'findOb'
+    print ob
     rootOb=None
     for rel1 in neo_graph.match(end_node=ob):
         if get_neo_label(rel1.start_node())=='User':
@@ -61,9 +63,11 @@ def search(nick_name=None):
     newDictList.append(sourceDictOb)
     jsonNodeList.append(dict2json(sourceDictOb))
     ##根据豆瓣作为source节点进行查找
-    leafNodeList = neo_graph.match(start_node=rootOb)
-    for rel1 in leafNodeList:
+    leafNodeList=[]
+    rootRels = neo_graph.match(start_node=rootOb)
+    for rel1 in  rootRels:
         targetDictOb=neoob2dict(rel1.end_node())
+        leafNodeList.append(rel1.end_node())
         newDictList.append(targetDictOb)
         jsonNodeList.append(dict2json(targetDictOb))
         relLabel=rel1._Relationship__type.__str__()
@@ -71,11 +75,16 @@ def search(nick_name=None):
                           "label":{"normal":{"show":True,"formatter":relLabel}} })
         rellist.append(myrel)
     ##再将每个子节点
-#     for rel2 in leafNodeList:
-#         targetDictOb=neoob2dict(rel2.endNode())
-#         if neo_graph.match(start_node=targetDictOb):
-#         myrel=json.dumps({"source":targetDictOb["neo_id"],  "target":sourceDictOb["neo_id"]  })
-#         rellist.append(myrel)
+    
+    for leafNode in leafNodeList:
+        targetDictOb=neoob2dict(leafNode)
+        rel3set=neo_graph.match(start_node=leafNode)
+        for rel3 in rel3set:
+            relatedNode=neoob2dict(rel3.end_node())
+            relLabel=rel3._Relationship__type.__str__()
+            myrel=json.dumps({"source":targetDictOb["neo_id"],  "target":relatedNode["neo_id"],
+                              "label":{"normal":{"show":True,"formatter":relLabel}}  })
+            rellist.append(myrel)
     
     return render_template('search.html', nodeDataList=newDictList,
                           jsonNodeList=jsonNodeList,rellist=rellist)
